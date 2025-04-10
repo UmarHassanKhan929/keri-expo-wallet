@@ -176,29 +176,37 @@ function App(): React.JSX.Element {
   // }
 
   const fullTest = async () => {
+    console.log("Starting fullTest")
     try {
-      const url = "http://192.168.1.4:3901"
-      const bootUrl = "http://192.168.1.4:3903"
-
+      const url = "http://192.168.110.17:3901"
+      const bootUrl = "http://192.168.110.17:3903"
+      console.log("URL", url)
+      console.log("Boot URL", bootUrl)
       await signify.ready()
+      console.log("Signify ready")
       const bran1 = signify.randomPasscode()
       const bran2 = signify.randomPasscode()
+      console.log("Branch 1", bran1)
+      console.log("Branch 2", bran2)
       const client1 = new signify.SignifyClient(
         url,
         bran1,
         signify.Tier.low,
         bootUrl
       )
+      console.log("Client 1 created")
       const client2 = new signify.SignifyClient(
         url,
         bran2,
         signify.Tier.low,
         bootUrl
       )
+      console.log("Client 2 created")
       await client1.boot()
       await client2.boot()
       await client1.connect()
       await client2.connect()
+      console.log("Clients booted and connected")
       const state1 = await client1.state()
       const state2 = await client2.state()
       console.log(
