@@ -1,23 +1,30 @@
 import "./shim"
 import "./globals"
 import React from "react"
-import { Button, StyleSheet, View } from "react-native"
-import signify, { Serder } from "signify-ts"
-import { assertOperations, resolveOobi, waitOperation } from "./utils"
+import { NavigationContainer } from '@react-navigation/native'
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs'
+import { Ionicons } from '@expo/vector-icons'
+import CredentialsScreen from './screens/CredentialsScreen'
+import SettingsScreen from './screens/SettingsScreen'
+import { SignifyProvider } from './contexts/SignifyContext'
+// import signify, { Serder } from "signify-ts"
+// import { assertOperations, resolveOobi, waitOperation } from "./utils"
+
+const Tab = createBottomTabNavigator()
 
 function App(): React.JSX.Element {
-  const isReady = async () => {
-    try {
-      const isReady = await signify.ready()
+  // const isReady = async () => {
+  //   try {
+  //     const isReady = await signify.ready()
 
-      // const bran1 = signify.randomPasscode()
-      const salt = new signify.Salter({})
+  //     // const bran1 = signify.randomPasscode()
+  //     const salt = new signify.Salter({})
 
-      console.log("Branch 1 check", salt.qb64)
-    } catch (error) {
-      console.log("Error in isReady", error)
-    }
-  }
+  //     console.log("Branch 1 check", salt.qb64)
+  //   } catch (error) {
+  //     console.log("Error in isReady", error)
+  //   }
+  // }
 
   // const setupAllie = async () => {
   //   try {
@@ -175,192 +182,170 @@ function App(): React.JSX.Element {
   //   }
   // }
 
-  const fullTest = async () => {
-    console.log("Starting fullTest")
-    try {
-      const url = "http://192.168.110.17:3901"
-      const bootUrl = "http://192.168.110.17:3903"
-      console.log("URL", url)
-      console.log("Boot URL", bootUrl)
-      await signify.ready()
-      console.log("Signify ready")
-      const bran1 = signify.randomPasscode()
-      const bran2 = signify.randomPasscode()
-      console.log("Branch 1", bran1)
-      console.log("Branch 2", bran2)
-      const client1 = new signify.SignifyClient(
-        url,
-        bran1,
-        signify.Tier.low,
-        bootUrl
-      )
-      console.log("Client 1 created")
-      const client2 = new signify.SignifyClient(
-        url,
-        bran2,
-        signify.Tier.low,
-        bootUrl
-      )
-      console.log("Client 2 created")
-      await client1.boot()
-      await client2.boot()
-      await client1.connect()
-      await client2.connect()
-      console.log("Clients booted and connected")
-      const state1 = await client1.state()
-      const state2 = await client2.state()
-      console.log(
-        "Client 1 connected. Client AID:",
-        state1.controller.state.i,
-        "Agent AID: ",
-        state1.agent.i
-      )
-      console.log(
-        "Client 2 connected. Client AID:",
-        state2.controller.state.i,
-        "Agent AID: ",
-        state2.agent.i
-      )
+  // const fullTest = async () => {
+  //   console.log("Starting fullTest")
+  //   try {
+  //     const url = "http://192.168.110.17:3901"
+  //     const bootUrl = "http://192.168.110.17:3903"
+  //     console.log("URL", url)
+  //     console.log("Boot URL", bootUrl)
+  //     await signify.ready()
+  //     console.log("Signify ready")
+  //     const bran1 = signify.randomPasscode()
+  //     const bran2 = signify.randomPasscode()
+  //     console.log("Branch 1", bran1)
+  //     console.log("Branch 2", bran2)
+  //     const client1 = new signify.SignifyClient(
+  //       url,
+  //       bran1,
+  //       signify.Tier.low,
+  //       bootUrl
+  //     )
+  //     console.log("Client 1 created")
+  //     const client2 = new signify.SignifyClient(
+  //       url,
+  //       bran2,
+  //       signify.Tier.low,
+  //       bootUrl
+  //     )
+  //     console.log("Client 2 created")
+  //     await client1.boot()
+  //     await client2.boot()
+  //     await client1.connect()
+  //     await client2.connect()
+  //     console.log("Clients booted and connected")
+  //     const state1 = await client1.state()
+  //     const state2 = await client2.state()
+  //     console.log(
+  //       "Client 1 connected. Client AID:",
+  //       state1.controller.state.i,
+  //       "Agent AID: ",
+  //       state1.agent.i
+  //     )
+  //     console.log(
+  //       "Client 2 connected. Client AID:",
+  //       state2.controller.state.i,
+  //       "Agent AID: ",
+  //       state2.agent.i
+  //     )
 
-      // Generate challenge words
-      const challenge1_small = await client1.challenges().generate(128)
-      console.log("CHECK 1", challenge1_small.words.length === 12)
-      const challenge1_big = await client1.challenges().generate(256)
-      console.log("CHECK 2", challenge1_big.words.length === 24)
+  //     // Generate challenge words
+  //     const challenge1_small = await client1.challenges().generate(128)
+  //     console.log("CHECK 1", challenge1_small.words.length === 12)
+  //     const challenge1_big = await client1.challenges().generate(256)
+  //     console.log("CHECK 2", challenge1_big.words.length === 24)
 
-      // Create two identifiers, one for each client
-      const icpResult1 = await client1.identifiers().create("alice", {
-        toad: 3,
-        wits: [
-          "BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha",
-          "BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM",
-          "BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX",
-        ],
-      })
-      const { response: aid1 } = await waitOperation(
-        client1,
-        await icpResult1.op()
-      )
-      const rpyResult1 = await client1
-        .identifiers()
-        .addEndRole("alice", "agent", client1!.agent!.pre)
-      await waitOperation(client1, await rpyResult1.op())
-      console.log("Alice's AID:", aid1.i)
+  //     // Create two identifiers, one for each client
+  //     const icpResult1 = await client1.identifiers().create("alice", {
+  //       toad: 3,
+  //       wits: [
+  //         "BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha",
+  //         "BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM",
+  //         "BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX",
+  //       ],
+  //     })
+  //     const { response: aid1 } = await waitOperation(
+  //       client1,
+  //       await icpResult1.op()
+  //     )
+  //     const rpyResult1 = await client1
+  //       .identifiers()
+  //       .addEndRole("alice", "agent", client1!.agent!.pre)
+  //     await waitOperation(client1, await rpyResult1.op())
+  //     console.log("Alice's AID:", aid1.i)
 
-      const icpResult2 = await client2.identifiers().create("bob", {
-        toad: 3,
-        wits: [
-          "BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha",
-          "BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM",
-          "BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX",
-        ],
-      })
-      const { response: aid2 } = await waitOperation(
-        client2,
-        await icpResult2.op()
-      )
-      const rpyResult2 = await client2
-        .identifiers()
-        .addEndRole("bob", "agent", client2!.agent!.pre)
-      await waitOperation(client2, await rpyResult2.op())
+  //     const icpResult2 = await client2.identifiers().create("bob", {
+  //       toad: 3,
+  //       wits: [
+  //         "BBilc4-L3tFUnfM_wJr4S4OJanAv_VmF_dJNN6vkf2Ha",
+  //         "BLskRTInXnMxWaGqcpSyMgo0nYbalW99cGZESrz3zapM",
+  //         "BIKKuvBwpmDVA4Ds-EpL5bt9OqPzWPja2LigFYZN2YfX",
+  //       ],
+  //     })
+  //     const { response: aid2 } = await waitOperation(
+  //       client2,
+  //       await icpResult2.op()
+  //     )
+  //     const rpyResult2 = await client2
+  //       .identifiers()
+  //       .addEndRole("bob", "agent", client2!.agent!.pre)
+  //     await waitOperation(client2, await rpyResult2.op())
 
-      // Exchenge OOBIs
-      const oobi1 = await client1.oobis().get("alice", "agent")
-      const oobi2 = await client2.oobis().get("bob", "agent")
+  //     // Exchenge OOBIs
+  //     const oobi1 = await client1.oobis().get("alice", "agent")
+  //     const oobi2 = await client2.oobis().get("bob", "agent")
 
-      await resolveOobi(client1, oobi2.oobis[0], "bob")
-      console.log("Client 1 resolved Bob's OOBI")
-      await resolveOobi(client2, oobi1.oobis[0], "alice")
-      console.log("Client 2 resolved Alice's OOBI")
+  //     await resolveOobi(client1, oobi2.oobis[0], "bob")
+  //     console.log("Client 1 resolved Bob's OOBI")
+  //     await resolveOobi(client2, oobi1.oobis[0], "alice")
+  //     console.log("Client 2 resolved Alice's OOBI")
 
-      // List Client 1 contacts
-      let contacts1 = await client1.contacts().list()
-      let bobContact = contacts1.find((contact) => contact.alias === "bob")
-      console.log("CHECK 3", bobContact?.alias === "bob")
-      console.log("CHECK 4", bobContact?.challenges?.length === 0)
+  //     // List Client 1 contacts
+  //     let contacts1 = await client1.contacts().list()
+  //     let bobContact = contacts1.find((contact) => contact.alias === "bob")
+  //     console.log("CHECK 3", bobContact?.alias === "bob")
+  //     console.log("CHECK 4", bobContact?.challenges?.length === 0)
 
-      // Bob responds to Alice challenge
-      await client2.challenges().respond("bob", aid1.i, challenge1_small.words)
-      console.log("Bob responded to Alice challenge with signed words")
+  //     // Bob responds to Alice challenge
+  //     await client2.challenges().respond("bob", aid1.i, challenge1_small.words)
+  //     console.log("Bob responded to Alice challenge with signed words")
 
-      // Alice verifies Bob's response
-      const verifyOperation = await waitOperation(
-        client1,
-        await client1.challenges().verify(aid2.i, challenge1_small.words)
-      )
-      console.log("Alice verified challenge response")
+  //     // Alice verifies Bob's response
+  //     const verifyOperation = await waitOperation(
+  //       client1,
+  //       await client1.challenges().verify(aid2.i, challenge1_small.words)
+  //     )
+  //     console.log("Alice verified challenge response")
 
-      //Alice mark response as accepted
-      const verifyResponse = verifyOperation.response as {
-        exn: Record<string, unknown>
-      }
-      const exn = new Serder(verifyResponse.exn)
+  //     //Alice mark response as accepted
+  //     const verifyResponse = verifyOperation.response as {
+  //       exn: Record<string, unknown>
+  //     }
+  //     const exn = new Serder(verifyResponse.exn)
 
-      await client1.challenges().responded(aid2.i, exn.ked.d)
-      console.log("Alice marked challenge response as accepted")
+  //     await client1.challenges().responded(aid2.i, exn.ked.d)
+  //     console.log("Alice marked challenge response as accepted")
 
-      // Check Bob's challenge in conctats
-      contacts1 = await client1.contacts().list()
-      bobContact = contacts1.find((contact) => contact.alias === "bob")
+  //     // Check Bob's challenge in conctats
+  //     contacts1 = await client1.contacts().list()
+  //     bobContact = contacts1.find((contact) => contact.alias === "bob")
 
-      console.log("CHECK 5", Array.isArray(bobContact?.challenges))
-      console.log("CHECK 6", bobContact?.challenges[0].authenticated)
+  //     console.log("CHECK 5", Array.isArray(bobContact?.challenges))
+  //     console.log("CHECK 6", bobContact?.challenges[0].authenticated)
 
-      await assertOperations(client1, client2)
-    } catch (error) {
-      console.log("Error in fullTest", error)
-    }
-  }
+  //     await assertOperations(client1, client2)
+  //   } catch (error) {
+  //     console.log("Error in fullTest", error)
+  //   }
+  // }
 
   return (
-    <View style={styles.container}>
-      {/* <Button title="isReady" onPress={isReady} /> */}
-      {/* <View style={styles.leftSide}>
-        <View style={{ height: 10 }} />
-        <View style={{ height: 10 }} />
-        <Button title="Setup Allie" onPress={setupAllie} />
-      </View>
+    <SignifyProvider>
+      <NavigationContainer>
+        <Tab.Navigator
+          screenOptions={({ route }) => ({
+            tabBarIcon: ({ focused, color, size }) => {
+              let iconName: keyof typeof Ionicons.glyphMap = 'settings'
 
-      <View style={styles.divider}>
-        <Button title="fullTest" onPress={fullTest} />
-      </View>
+              if (route.name === 'Credentials') {
+                iconName = focused ? 'id-card' : 'id-card-outline'
+              } else if (route.name === 'Settings') {
+                iconName = focused ? 'settings' : 'settings-outline'
+              }
 
-      <View style={styles.rightSide}>
-        <View style={{ height: 10 }} />
-        <Button title="Setup brett" onPress={setupBrett} />
-      </View> */}
-
-      <Button title="Full challenge Test" onPress={fullTest} />
-    </View>
+              return <Ionicons name={iconName} size={size} color={color} />
+            },
+            tabBarActiveTintColor: '#007AFF',
+            tabBarInactiveTintColor: 'gray',
+            headerShown: false,
+          })}
+        >
+          <Tab.Screen name="Credentials" component={CredentialsScreen} />
+          <Tab.Screen name="Settings" component={SettingsScreen} />
+        </Tab.Navigator>
+      </NavigationContainer>
+    </SignifyProvider>
   )
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: "row",
-    backgroundColor: "#f0f0f0",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  leftSide: {
-    flex: 1,
-    backgroundColor: "#e6f2ff",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-  },
-  rightSide: {
-    flex: 1,
-    backgroundColor: "#fff2e6",
-    alignItems: "center",
-    justifyContent: "center",
-    paddingVertical: 20,
-  },
-  divider: {
-    width: 2,
-    backgroundColor: "#888",
-  },
-})
 
 export default App
