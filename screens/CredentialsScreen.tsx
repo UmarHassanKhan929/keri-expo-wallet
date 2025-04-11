@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, FlatList, ActivityIndicator, RefreshControl, TouchableOpacity, Alert, Modal, Dimensions } from 'react-native';
 import { useSignify } from '../contexts/SignifyContext';
+import { CameraView, Camera } from 'expo-camera';
 
 export default function CredentialsScreen() {
   const [identifiers, setIdentifiers] = useState<any[]>([]);
@@ -8,6 +9,12 @@ export default function CredentialsScreen() {
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const { getIdentifiers, getCredentials, isConnected, currentIdentifier, setCurrentIdentifier, client } = useSignify();
+  const [selectedCredential, setSelectedCredential] = useState<any>(null);
+
+
+  const [hasPermission, setHasPermission] = useState<boolean | null>(null);
+  const [isScanning, setIsScanning] = useState(false);
+  const [scannedData, setScannedData] = useState<string | null>(null);
 
   const loadIdentifiers = async () => {
     if (!isConnected) return;
@@ -60,18 +67,49 @@ export default function CredentialsScreen() {
       if (!creds) throw new Error('Client not available');
 
       const vlei_cesr = await creds.get(item.said, true);
-
-      console.log('Credential Details:', {
-        title: item.title,
-        said: item.said,
-        aid: item.aid,
-        lei: item.lei,
-        personLegalName: item.personLegalName,
-        role: item.role,
-        cesr: vlei_cesr
+      setSelectedCredential({
+        ...item,
+        vlei_cesr
       });
+
+      // Request camera permission when presenting
+      const { status } = await Camera.requestCameraPermissionsAsync();
+      setHasPermission(status === 'granted');
+
+      if (status === 'granted') {
+        setIsScanning(true);
+      } else {
+        Alert.alert('Permission Required', 'Camera permission is required to scan QR codes');
+      }
     } catch (error) {
       console.error('Error getting credential CESR:', error);
+    }
+  };
+
+  const handleBarCodeScanned = async ({ type, data }: { type: string, data: string }) => {
+    setScannedData(data);
+    setIsScanning(false);
+
+    console.log('Scanned Data:', data);
+    console.log('Scanned Type:', type);
+
+    try {
+      // Here you would call your API with the scanned data
+      fetch(data, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          said: selectedCredential.said,
+          aid: selectedCredential.aid,
+          vlei: selectedCredential.vlei_cesr
+        })
+      });
+      Alert.alert('Success', 'QR Code scanned successfully: ');
+    } catch (error) {
+      console.error('Error processing QR code:', error);
+      Alert.alert('Error', 'Failed to process QR code');
     }
   };
 
@@ -191,6 +229,50 @@ export default function CredentialsScreen() {
           />
         )}
       </View>
+
+      {isScanning && (
+        <Modal
+          animationType="slide"
+          transparent={false}
+          visible={isScanning}
+          onRequestClose={() => setIsScanning(false)}
+        >
+          <View style={{ flex: 1 }}>
+            {hasPermission ? (
+              <View style={styles.cameraContainer}>
+                <CameraView
+                  onBarcodeScanned={handleBarCodeScanned}
+                  barcodeScannerSettings={{
+                    barcodeTypes: ["qr", "pdf417"],
+                  }}
+                  style={StyleSheet.absoluteFillObject}
+                />
+                <View style={styles.overlay}>
+                  <View style={styles.scannerContainer}>
+                    <View style={styles.scannerOutline}>
+                      <View style={[styles.corner, styles.topLeft]} />
+                      <View style={[styles.corner, styles.topRight]} />
+                      <View style={[styles.corner, styles.bottomLeft]} />
+                      <View style={[styles.corner, styles.bottomRight]} />
+                    </View>
+                    <Text style={styles.scannerText}>Position QR code within the frame</Text>
+                  </View>
+                </View>
+              </View>
+            ) : (
+              <View style={styles.permissionContainer}>
+                <Text style={styles.permissionText}>Camera permission is required to scan QR codes</Text>
+              </View>
+            )}
+            <TouchableOpacity
+              style={styles.closeButton}
+              onPress={() => setIsScanning(false)}
+            >
+              <Text style={styles.closeButtonText}>Cancel</Text>
+            </TouchableOpacity>
+          </View>
+        </Modal>
+      )}
     </View>
   );
 }
@@ -220,6 +302,21 @@ const styles = StyleSheet.create({
     marginRight: 10,
     borderRadius: 8,
     backgroundColor: '#f0f0f0',
+  },
+  closeButton: {
+    position: 'absolute',
+    bottom: 50,
+    left: 50,
+    right: 50,
+    backgroundColor: '#007AFF',
+    padding: 15,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  closeButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
   selectedIdentifier: {
     backgroundColor: '#f2ffFF',
@@ -331,5 +428,75 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  permissionContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  permissionText: {
+    fontSize: 16,
+    textAlign: 'center',
+    color: '#666',
+  },
+  cameraContainer: {
+    flex: 1,
+    position: 'relative',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  scannerContainer: {
+    width: Dimensions.get('window').width * 0.7,
+    height: Dimensions.get('window').width * 0.7,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scannerOutline: {
+    width: '100%',
+    height: '100%',
+    borderWidth: 2,
+    borderColor: '#fff',
+    position: 'relative',
+  },
+  corner: {
+    position: 'absolute',
+    width: 20,
+    height: 20,
+    borderColor: '#007AFF',
+  },
+  topLeft: {
+    top: -2,
+    left: -2,
+    borderTopWidth: 4,
+    borderLeftWidth: 4,
+  },
+  topRight: {
+    top: -2,
+    right: -2,
+    borderTopWidth: 4,
+    borderRightWidth: 4,
+  },
+  bottomLeft: {
+    bottom: -2,
+    left: -2,
+    borderBottomWidth: 4,
+    borderLeftWidth: 4,
+  },
+  bottomRight: {
+    bottom: -2,
+    right: -2,
+    borderBottomWidth: 4,
+    borderRightWidth: 4,
+  },
+  scannerText: {
+    color: '#fff',
+    fontSize: 16,
+    marginTop: 20,
+    textAlign: 'center',
   },
 }); 

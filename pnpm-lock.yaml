@@ -35,6 +35,9 @@ dependencies:
   expo-build-properties:
     specifier: ~0.13.1
     version: 0.13.2(expo@52.0.44)
+  expo-camera:
+    specifier: ~16.0.18
+    version: 16.0.18(expo@52.0.44)(react-native@0.76.3)(react@18.3.1)
   expo-status-bar:
     specifier: ~2.0.0
     version: 2.0.1(react-native@0.76.3)(react@18.3.1)
@@ -3999,6 +4002,23 @@ packages:
       ajv: 8.17.1
       expo: 52.0.44(@babel/core@7.26.10)(@babel/preset-env@7.26.9)(react-native@0.76.3)(react@18.3.1)
       semver: 7.7.1
+    dev: false
+
+  /expo-camera@16.0.18(expo@52.0.44)(react-native@0.76.3)(react@18.3.1):
+    resolution: {integrity: sha512-NP5u2yyc+wZc9GdUXH+jcEytyXZwBnHxItMwXoZQQxi4wgltwvs4XfSWjBtRZe1LngnhpBfPyPJV0aShjWlLDg==}
+    peerDependencies:
+      expo: '*'
+      react: '*'
+      react-native: '*'
+      react-native-web: '*'
+    peerDependenciesMeta:
+      react-native-web:
+        optional: true
+    dependencies:
+      expo: 52.0.44(@babel/core@7.26.10)(@babel/preset-env@7.26.9)(react-native@0.76.3)(react@18.3.1)
+      invariant: 2.2.4
+      react: 18.3.1
+      react-native: 0.76.3(@babel/core@7.26.10)(@babel/preset-env@7.26.9)(@types/react@18.3.20)(react@18.3.1)
     dev: false
 
   /expo-constants@17.0.8(expo@52.0.44)(react-native@0.76.3):
