@@ -7,7 +7,7 @@ export default function CredentialsScreen() {
   const [credentials, setCredentials] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
-  const { getIdentifiers, getCredentials, isConnected, currentIdentifier, setCurrentIdentifier } = useSignify();
+  const { getIdentifiers, getCredentials, isConnected, currentIdentifier, setCurrentIdentifier, client } = useSignify();
 
   const loadIdentifiers = async () => {
     if (!isConnected) return;
@@ -52,6 +52,27 @@ export default function CredentialsScreen() {
     setRefreshing(true);
     await loadCredentials();
     setRefreshing(false);
+  };
+
+  const handlePresentCredential = async (item: any) => {
+    try {
+      const creds = client?.credentials();
+      if (!creds) throw new Error('Client not available');
+
+      const vlei_cesr = await creds.get(item.said, true);
+
+      console.log('Credential Details:', {
+        title: item.title,
+        said: item.said,
+        aid: item.aid,
+        lei: item.lei,
+        personLegalName: item.personLegalName,
+        role: item.role,
+        cesr: vlei_cesr
+      });
+    } catch (error) {
+      console.error('Error getting credential CESR:', error);
+    }
   };
 
   const renderIdentifierItem = ({ item }: { item: any }) => (
@@ -120,6 +141,13 @@ export default function CredentialsScreen() {
             </Text>
           </View>
         )}
+
+        <TouchableOpacity
+          style={styles.presentButton}
+          onPress={() => handlePresentCredential(item)}
+        >
+          <Text style={styles.presentButtonText}>Present</Text>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -291,5 +319,17 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     color: '#666',
     marginTop: 20,
+  },
+  presentButton: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 8,
+    marginTop: 16,
+    alignItems: 'center',
+  },
+  presentButtonText: {
+    color: '#fff',
+    fontSize: 16,
+    fontWeight: 'bold',
   },
 }); 
